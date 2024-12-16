@@ -8,6 +8,9 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+#Importación para trabajar con API con clases
+from rest_framework.views import APIView
+
 
 # Create your views here.
 def EmpleadosV1(request):
@@ -65,5 +68,46 @@ def Empleado_detail(request, pk):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     if request.method == 'DELETE':
+        empleado.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    
+class EmpleadoList(APIView):
+    
+    def get(self, request):
+        empleados = Empleado.objects.all()
+        serializer = EmpleadoSerializer(empleados, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request):
+        serializer = EmpleadoSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class EmpleadoDetail(APIView):
+    
+    def get_object(self, pk):
+        try:
+            return Empleado.objects.get(pk=pk)
+        except Empleado.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+    def get(self, request, pk):
+        empleado = self.get_object(pk)
+        serializer = EmpleadoSerializer(empleado)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        empleado = self.get_object(pk)
+        serializer = EmpleadoSerializer(empleado, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, pk):
+        empleado = self.get_object(pk)
         empleado.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
